@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Windows.Forms;
 using Gibbed.Ghostbusters.FileFormats;
+using Ionic.Zlib;
 
 namespace Gibbed.Ghostbusters.Unpack
 {
@@ -62,6 +63,8 @@ namespace Gibbed.Ghostbusters.Unpack
 
 		private void OnOpen(object sender, EventArgs e)
 		{
+            this.logText.Clear();
+
 			if (this.openFileDialog.ShowDialog() != DialogResult.OK)
 			{
 				return;
@@ -135,15 +138,41 @@ namespace Gibbed.Ghostbusters.Unpack
 
 				Stream output = File.OpenWrite(Path.Combine(info.SavePath, outputName));
 
-                long left = entry.UncompressedSize;
-                byte[] data = new byte[4096];
-                while (left > 0)
+                if (entry.CompressionLevel > 0)
                 {
-                    int block = (int)(Math.Min(left, 4096));
-                    input.Read(data, 0, block);
-                    output.Write(data, 0, block);
-                    left -= block;
-				}
+                    ZlibStream zlib = new ZlibStream(input, CompressionMode.Decompress, true);
+                    uint left = entry.UncompressedSize;
+                    byte[] block = new byte[4096];
+                    while (left > 0)
+                    {
+                        int read = zlib.Read(block, 0, (int)Math.Min(block.Length, left));
+                        
+                        if (read == 0)
+                        {
+                            break;
+                        }
+                        else if (read < 0)
+                        {
+                            throw new InvalidOperationException("decompression error");
+                        }
+
+                        output.Write(block, 0, read);
+                        left -= (uint)read;
+                    }
+                    zlib.Close();
+                }
+                else
+                {
+                    long left = entry.UncompressedSize;
+                    byte[] data = new byte[4096];
+                    while (left > 0)
+                    {
+                        int block = (int)(Math.Min(left, 4096));
+                        input.Read(data, 0, block);
+                        output.Write(data, 0, block);
+                        left -= block;
+                    }
+                }
 
 				output.Close();
 				succeeded++;

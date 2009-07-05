@@ -9,11 +9,12 @@ namespace Gibbed.Ghostbusters.FileFormats
     public class PodEntry
     {
         public string Name;
-        public UInt32 UncompressedSize;
-        public UInt32 Offset;
         public UInt32 CompressedSize;
-        public UInt32 Unknown5;
-        public UInt64 Hash;
+        public UInt32 Offset;
+        public UInt32 UncompressedSize;
+        public UInt32 CompressionLevel;
+        public UInt32 Timestamp;
+        public UInt32 Checksum;
 
         public override string ToString()
         {
@@ -28,24 +29,25 @@ namespace Gibbed.Ghostbusters.FileFormats
         {
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 4)]
             public string Magic;
-            public UInt32 Unknown004;
-
+            public UInt32 Checksum;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 0x50)]
-            public string Unknown008;
+            public string Comment;
             public Int32 IndexCount;
             public UInt32 Unknown05C;
             public UInt32 Unknown060;
             public UInt32 Unknown064;
-            
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 0x50)]
-            public string Unknown068;
-
+            public string Author;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 0x50)]
-            public string Unknown0B8;
+            public string Copyright;
             public UInt32 IndexOffset;
             public UInt32 Unknown10C;
             public UInt32 NamesSize;
             public UInt32 Unknown114;
+            public UInt32 Unknown118;
+            public UInt32 Unknown11C;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 0x50)]
+            public string Unknown120;
         }
 
         public byte Version;
@@ -63,7 +65,7 @@ namespace Gibbed.Ghostbusters.FileFormats
 
             if (magic != "POD3" && magic != "POD4" && magic != "POD5")
             {
-                throw new Exception();
+                throw new InvalidOperationException("only pod versions 3 to 5 are supported");
             }
 
             input.Seek(position, SeekOrigin.Begin);
@@ -100,21 +102,22 @@ namespace Gibbed.Ghostbusters.FileFormats
                 PodEntry entry = new PodEntry();
 
                 nameIndexes[i] = input.ReadU32();
-                entry.UncompressedSize = input.ReadU32();
+                entry.CompressedSize = input.ReadU32();
                 entry.Offset = input.ReadU32();
 
                 if (this.Version >= 4)
                 {
-                    entry.CompressedSize = input.ReadU32();
-                    entry.Unknown5 = input.ReadU32();
+                    entry.UncompressedSize = input.ReadU32();
+                    entry.CompressionLevel = input.ReadU32();
                 }
                 else
                 {
-                    entry.CompressedSize = entry.UncompressedSize;
-                    entry.Unknown5 = 0;
+                    entry.UncompressedSize = entry.CompressedSize;
+                    entry.CompressionLevel = 0;
                 }
 
-                entry.Hash = input.ReadU64();
+                entry.Timestamp = input.ReadU32();
+                entry.Checksum = input.ReadU32();
 
                 this.Entries.Add(entry);
             }
@@ -124,16 +127,13 @@ namespace Gibbed.Ghostbusters.FileFormats
 
             for (int i = 0; i < header.IndexCount; i++)
             {
-                this.Entries[i].Name = names.ReadASCIIZ(nameIndexes[i]);
+                PodEntry entry = this.Entries[i];
 
-                if (this.Entries[i].CompressedSize != this.Entries[i].UncompressedSize)
-                {
-                    throw new Exception();
-                }
+                entry.Name = names.ReadASCIIZ(nameIndexes[i]);
 
-                if (this.Entries[i].Unknown5 != 0)
+                if (entry.CompressedSize != entry.UncompressedSize && entry.CompressionLevel == 0)
                 {
-                    throw new Exception();
+                    throw new FormatException("compressed and uncompressed size mismatch when compression level is zero");
                 }
             }
         }
