@@ -61,7 +61,7 @@ namespace Gibbed.Ghostbusters.FileFormats
         public void Deserialize(Stream input)
         {
             long position = input.Position;
-            string magic = input.ReadASCII(4);
+            string magic = input.ReadStringASCII(4);
 
             if (magic != "POD3" && magic != "POD4" && magic != "POD5")
             {
@@ -101,14 +101,14 @@ namespace Gibbed.Ghostbusters.FileFormats
             {
                 PodEntry entry = new PodEntry();
 
-                nameIndexes[i] = input.ReadU32();
-                entry.CompressedSize = input.ReadU32();
-                entry.Offset = input.ReadU32();
+                nameIndexes[i] = input.ReadValueU32();
+                entry.CompressedSize = input.ReadValueU32();
+                entry.Offset = input.ReadValueU32();
 
                 if (this.Version >= 4)
                 {
-                    entry.UncompressedSize = input.ReadU32();
-                    entry.CompressionLevel = input.ReadU32();
+                    entry.UncompressedSize = input.ReadValueU32();
+                    entry.CompressionLevel = input.ReadValueU32();
                 }
                 else
                 {
@@ -116,8 +116,8 @@ namespace Gibbed.Ghostbusters.FileFormats
                     entry.CompressionLevel = 0;
                 }
 
-                entry.Timestamp = input.ReadU32();
-                entry.Checksum = input.ReadU32();
+                entry.Timestamp = input.ReadValueU32();
+                entry.Checksum = input.ReadValueU32();
 
                 this.Entries.Add(entry);
             }
@@ -129,7 +129,7 @@ namespace Gibbed.Ghostbusters.FileFormats
             {
                 PodEntry entry = this.Entries[i];
 
-                entry.Name = names.ReadASCIIZ(nameIndexes[i]);
+                entry.Name = names.ToStringASCIIZ(nameIndexes[i]);
 
                 if (entry.CompressedSize != entry.UncompressedSize && entry.CompressionLevel == 0)
                 {
