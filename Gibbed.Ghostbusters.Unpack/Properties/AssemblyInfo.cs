@@ -27,11 +27,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 
-[assembly: AssemblyTitle("Gibbed.Ghostbusters.FileFormats")]
+[assembly: AssemblyTitle("Gibbed.Ghostbusters.Unpack")]
 [assembly: AssemblyDescription("http://gib.me/")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Gibbed.Ghostbusters.FileFormats")]
+[assembly: AssemblyProduct("Gibbed.Ghostbusters.Unpack")]
 [assembly: AssemblyCopyright("Copyright © Gibbed 2014")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -44,7 +44,7 @@ using System.Runtime.InteropServices;
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 
-[assembly: Guid("593f7e5b-e796-4f38-8587-9d8db6beb656")]
+[assembly: Guid("6da431b4-dce2-4b89-b49a-8b77406f72aa")]
 
 // Version information for an assembly consists of the following four values:
 //
